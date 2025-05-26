@@ -109,15 +109,15 @@ resources:
       - key: startup-script
         value: |
           #!/bin/bash
-          sudo git clone https://github.com/afgomezg1/medico.git /home/kong/medico
-          sudo mkdir -p /home/kong/declarative
-          sudo cp /home/kong/medico/kong.yaml /home/kong/declarative/kong.yaml
-          sudo docker network create kong-net || true
-          sudo docker run -d --name kong --network=kong-net --restart=always \
-            -v "/home/kong/declarative/kong.yaml:/kong/declarative/kong.yaml" \
-            -e "KONG_DATABASE=off" \
-            -e "KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yaml" \
-            -p 8000:8000 kong/kong-gateway
+          sudo mkdir /home/labs
+          cd /home/labs
+          sudo git clone https://github.com/afgomezg1/medico.git
+          cd ISIS2503-Microservices-AppDjango
+          docker network create kong-net
+          docker run -d --name kong --network=kong-net --restart=always \
+          -v "$(pwd):/kong/declarative/" -e "KONG_DATABASE=off" \
+          -e "KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yaml" \
+          -p 8000:8000 kong/kong-gateway
 
 # Database instances
 - name: relacional-db
