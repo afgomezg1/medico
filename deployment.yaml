@@ -6,13 +6,13 @@ resources:
     network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
     priority: 1000
     direction: INGRESS
-    sourceRanges: 
+    sourceRanges:
     - 0.0.0.0/0
     targetTags:
     - msd-api-gateway
     allowed:
     - IPProtocol: TCP
-      ports: 
+      ports:
       - 8000
 - name: msd-services-apps
   type: compute.v1.firewall
@@ -20,13 +20,13 @@ resources:
     network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
     priority: 1000
     direction: INGRESS
-    sourceTags: 
+    sourceTags:
     - msd-api-gateway
     targetTags:
     - msd-services-firewall
     allowed:
     - IPProtocol: TCP
-      ports: 
+      ports:
       - 8080
 - name: msd-services-apps-web
   type: compute.v1.firewall
@@ -34,13 +34,13 @@ resources:
     network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
     priority: 1000
     direction: INGRESS
-    sourceRanges: 
+    sourceRanges:
     - 0.0.0.0/0
     targetTags:
     - msd-services-firewall
     allowed:
     - IPProtocol: TCP
-      ports: 
+      ports:
       - 8080
 - name: msd-relacional-db
   type: compute.v1.firewall
@@ -48,13 +48,13 @@ resources:
     network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
     priority: 1000
     direction: INGRESS
-    sourceTags: 
+    sourceTags:
     - msd-services-firewall
     targetTags:
     - msd-relacional-db
     allowed:
     - IPProtocol: TCP
-      ports: 
+      ports:
       - 5432
 - name: msd-documental-db
   type: compute.v1.firewall
@@ -62,13 +62,13 @@ resources:
     network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
     priority: 1000
     direction: INGRESS
-    sourceTags: 
+    sourceTags:
       - msd-services-firewall
     targetTags:
       - msd-documental-db
     allowed:
       - IPProtocol: TCP
-        ports: 
+        ports:
           - 27017
 
 # Router y NAT
@@ -102,7 +102,7 @@ resources:
       - name: External NAT
         type: ONE_TO_ONE_NAT
     tags:
-      items: 
+      items:
       - msd-api-gateway
     metadata:
       items:
@@ -134,7 +134,7 @@ resources:
     - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
       networkIP: 10.128.0.82
     tags:
-      items: 
+      items:
       - msd-relacional-db
     metadata:
       items:
@@ -159,7 +159,7 @@ resources:
     - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
       networkIP: 10.128.0.83
     tags:
-      items: 
+      items:
       - msd-documental-db
     metadata:
       items:
@@ -188,7 +188,7 @@ resources:
       - name: External NAT
         type: ONE_TO_ONE_NAT
     tags:
-      items: 
+      items:
       - msd-services-firewall
     metadata:
       items:
@@ -223,7 +223,7 @@ resources:
       - name: External NAT
         type: ONE_TO_ONE_NAT
     tags:
-      items: 
+      items:
       - msd-services-firewall
     metadata:
       items:
@@ -235,10 +235,7 @@ resources:
           sudo git clone https://github.com/afgomezg1/historia_clinica.git
           cd historia_clinica
           sudo pip3 install -r requirements.txt
-          sudo python3 manage.py makemigrations
-          sudo python3 manage.py migrate
-          sudo python3 manage.py populate_db
-          
+
 # - name: msd-seguridad-ms
   # type: compute.v1.instance
   # properties:
@@ -258,7 +255,7 @@ resources:
       # - name: External NAT
         # type: ONE_TO_ONE_NAT
     # tags:
-      # items: 
+      # items:
       # - msd-services-firewall
     # metadata:
       # items:
