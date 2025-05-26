@@ -1,0 +1,36 @@
+_format_version: "2.1"
+
+services:
+  - name: medico_service
+    host: medico_upstream
+    protocol: http
+    routes:
+      - name: medico
+        paths:
+          - /medico
+        strip_path: false
+
+  - name: historia_clinica_service
+    host: historia_clinica_upstream
+    protocol: http
+    routes:
+      - name: historia_clinica
+        paths:
+          - /historia_clinica
+        strip_path: false
+
+upstreams:
+  - name: medico_upstream
+    targets:
+      - target: 10.128.0.84:8080
+        weight: 100
+
+  - name: historia_clinica_upstream
+    targets:
+      - target: 10.128.0.85:8080
+        weight: 100
+  
+  - name: seguridad_upstream
+    targets:
+      - target: 10.128.0.86:8080
+        weight: 100

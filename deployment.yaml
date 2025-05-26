@@ -1,0 +1,269 @@
+resources:
+# Firewall rules
+- name: msd-api-gateway
+  type: compute.v1.firewall
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+    priority: 1000
+    direction: INGRESS
+    sourceRanges: 
+    - 0.0.0.0/0
+    targetTags:
+    - msd-api-gateway
+    allowed:
+    - IPProtocol: TCP
+      ports: 
+      - 8000
+- name: msd-services-apps
+  type: compute.v1.firewall
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+    priority: 1000
+    direction: INGRESS
+    sourceTags: 
+    - msd-api-gateway
+    targetTags:
+    - msd-services-firewall
+    allowed:
+    - IPProtocol: TCP
+      ports: 
+      - 8080
+- name: msd-services-apps-web
+  type: compute.v1.firewall
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+    priority: 1000
+    direction: INGRESS
+    sourceRanges: 
+    - 0.0.0.0/0
+    targetTags:
+    - msd-services-firewall
+    allowed:
+    - IPProtocol: TCP
+      ports: 
+      - 8080
+- name: msd-relacional-db
+  type: compute.v1.firewall
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+    priority: 1000
+    direction: INGRESS
+    sourceTags: 
+    - msd-services-firewall
+    targetTags:
+    - msd-relacional-db
+    allowed:
+    - IPProtocol: TCP
+      ports: 
+      - 5432
+- name: msd-documental-db
+  type: compute.v1.firewall
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+    priority: 1000
+    direction: INGRESS
+    sourceTags: 
+      - msd-services-firewall
+    targetTags:
+      - msd-documental-db
+    allowed:
+      - IPProtocol: TCP
+        ports: 
+          - 27017
+
+# Router y NAT
+- name: msd-router
+  type: compute.v1.router
+  properties:
+    region: us-central1
+    network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+    nats:
+    - name: msd-nat
+      natIpAllocateOption: AUTO_ONLY
+      sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
+
+# Kong instance
+- name: msd-kong-instance
+  type: compute.v1.instance
+  properties:
+    zone: us-central1-a
+    machineType: https://www.googleapis.com/compute/v1/projects/sprint4-460918/zones/us-central1-a/machineTypes/e2-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/cos-cloud/global/images/cos-101-17162-463-8
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+      networkIP: 10.128.0.81
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+      items: 
+      - msd-api-gateway
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          sudo git clone https://github.com/afgomezg1/medico.git
+          cd medico
+          docker network create kong-net
+          docker run -d --name kong --network=kong-net --restart=always \
+          -v "$(pwd):/kong/declarative/" -e "KONG_DATABASE=off" \
+          -e "KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yaml" \
+          -p 8000:8000 kong/kong-gateway
+
+# Database instances
+- name: relacional-db
+  type: compute.v1.instance
+  properties:
+    zone: us-central1-a
+    machineType: https://www.googleapis.com/compute/v1/projects/sprint4-460918/zones/us-central1-a/machineTypes/e2-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/cos-cloud/global/images/cos-101-17162-463-8
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+      networkIP: 10.128.0.82
+    tags:
+      items: 
+      - msd-relacional-db
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          docker run --restart=always -d -e POSTGRES_USER=afgomezg1 -e POSTGRES_DB=relacional_db -e POSTGRES_PASSWORD=password -p 5432:5432 --name relacional-db postgres
+
+- name: documental-db
+  type: compute.v1.instance
+  properties:
+    zone: us-central1-a
+    machineType: https://www.googleapis.com/compute/v1/projects/sprint4-460918/zones/us-central1-a/machineTypes/e2-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/cos-cloud/global/images/cos-101-17162-386-64
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+      networkIP: 10.128.0.83
+    tags:
+      items: 
+      - msd-documental-db
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          docker run -e MONGO_INITDB_ROOT_USERNAME=afgomezg1 -e MONGO_INITDB_ROOT_PASSWORD=password -p 27017:27017 -d mongo
+
+# Service instances
+- name: msd-medico-ms
+  type: compute.v1.instance
+  properties:
+    zone: us-central1-a
+    machineType: https://www.googleapis.com/compute/v1/projects/sprint4-460918/zones/us-central1-a/machineTypes/e2-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/cos-cloud/global/images/cos-101-17162-463-8
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+      networkIP: 10.128.0.84
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+      items: 
+      - msd-services-firewall
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          sudo apt-get update
+          sudo apt install python3-pip -y
+          sudo git clone https://github.com/afgomezg1/medico.git
+          cd medico
+          sudo pip3 install -r requirements.txt
+          sudo python3 manage.py makemigrations
+          sudo python3 manage.py migrate
+          sudo python3 manage.py populate_db
+
+- name: msd-hc-ms
+  type: compute.v1.instance
+  properties:
+    zone: us-central1-a
+    machineType: https://www.googleapis.com/compute/v1/projects/sprint4-460918/zones/us-central1-a/machineTypes/e2-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240307b
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+      networkIP: 10.128.0.85
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+      items: 
+      - msd-services-firewall
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          sudo apt-get update
+          sudo apt install python3-pip -y
+          sudo git clone https://github.com/afgomezg1/historia_clinica.git
+          cd historia_clinica
+          sudo pip3 install -r requirements.txt
+          sudo python3 manage.py makemigrations
+          sudo python3 manage.py migrate
+          sudo python3 manage.py populate_db
+          
+# - name: msd-seguridad-ms
+  # type: compute.v1.instance
+  # properties:
+    # zone: us-central1-a
+    # machineType: https://www.googleapis.com/compute/v1/projects/sprint4-460918/zones/us-central1-a/machineTypes/e2-micro
+    # disks:
+    # - deviceName: boot
+      # type: PERSISTENT
+      # boot: true
+      # autoDelete: true
+      # initializeParams:
+        # sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240307b
+    # networkInterfaces:
+    # - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
+      # networkIP: 10.128.0.86
+      # accessConfigs:
+      # - name: External NAT
+        # type: ONE_TO_ONE_NAT
+    # tags:
+      # items: 
+      # - msd-services-firewall
+    # metadata:
+      # items:
+      # - key: startup-script
+        # value: |
+          # #!/bin/bash
+          # sudo apt-get update
+          # TODO: COMPLETAR SCRIPT DE INICIO
