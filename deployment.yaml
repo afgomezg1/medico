@@ -109,8 +109,6 @@ resources:
       - key: startup-script
         value: |
           #!/bin/bash
-          sudo mkdir /home/labs
-          cd /home/labs
           sudo git clone https://github.com/afgomezg1/medico.git
           cd medico
           docker network create kong-net
