@@ -112,7 +112,7 @@ resources:
           sudo mkdir /home/labs
           cd /home/labs
           sudo git clone https://github.com/afgomezg1/medico.git
-          cd ISIS2503-Microservices-AppDjango
+          cd medico
           docker network create kong-net
           docker run -d --name kong --network=kong-net --restart=always \
           -v "$(pwd):/kong/declarative/" -e "KONG_DATABASE=off" \

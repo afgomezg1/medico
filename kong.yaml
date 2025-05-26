@@ -29,6 +29,7 @@ upstreams:
     targets:
       - target: 10.128.0.85:8080
         weight: 100
+
   - name: seguridad_upstream
     targets:
       - target: 10.128.0.86:8080
