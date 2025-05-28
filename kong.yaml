@@ -10,6 +10,17 @@ services:
           - /personal-medico/internal
         strip_path: false
 
+        # Para Core de seguridad
+      - name: personal-medico-status
+        paths:
+          - /personal-medico/status # Kong recibirá /personal-medico/status
+        strip_path: true           # Kong enviará /status a Django
+      - name: personal-medico-spoofed-status
+        paths:
+          - /personal-medico/spoofed-status # Kong recibirá /personal-medico/spoofed-status
+        strip_path: true                     # Kong enviará /spoofed-status a Django
+
+
   - name: historia_clinica
     host: historia_clinica_upstream
     protocol: http
@@ -19,14 +30,24 @@ services:
           - /historia-clinica/api/report
         strip_path: false
 
+      # PAra Core de seguridad
+      - name: historia-clinica-status
+        paths:
+          - /historia-clinica/status
+        strip_path: true
+      - name: historia-clinica-spoofed-status
+        paths:
+          - /historia-clinica/spoofed-status
+        strip_path: true
+
    # NUEVO: Microservicio de Seguridad Java
-  - name: seguridad_ms # Un nombre de servicio para el microservicio de seguridad
-    host: seguridad_upstream # Apunta al upstream que definiremos abajo
+  - name: seguridad_ms 
+    host: seguridad_upstream 
     protocol: http
     routes:
       - name: seguridad-route # Ruta para acceder al microservicio de seguridad
         paths:
-          - /seguridad # Este será el path que tu UI llamará a través de Kong (ej: http://34.27.77.137:8000/seguridad/monitor/start)
+          - /seguridad # Este será el path que tu UI llamará a través de Kong 
         strip_path: true # Quita '/seguridad' antes de reenviar al microservicio Java
     plugins: # <--- ¡AÑADE ESTA SECCIÓN PARA EL PLUGIN CORS!
       - name: cors
