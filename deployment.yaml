@@ -115,6 +115,7 @@ resources:
           sudo mkdir /home/gateway
           cd /home/gateway
           sudo git clone https://github.com/afgomezg1/medico.git # Asumo que este repo contiene la config de Kong
+          sudo git checkout -b nicolas origin/nicolas # Branch nicolas
           cd medico
           docker network create kong-net
           docker run -d --name kong --network=kong-net --restart=always \
@@ -203,6 +204,8 @@ resources:
           sudo apt-get update
           sudo apt install python3-pip -y
           sudo git clone https://github.com/afgomezg1/medico.git
+          sudo git checkout -b nicolas origin/nicolas # Branch nicolas
+
           cd medico
           sudo pip3 install -r requirements.txt
           sudo python3 manage.py makemigrations
@@ -237,6 +240,8 @@ resources:
           sudo apt-get update
           sudo apt install python3-pip -y
           sudo git clone https://github.com/afgomezg1/historia_clinica.git
+          sudo git checkout -b nicolas origin/nicolas # Branch nicolas
+
           cd historia_clinica
           sudo pip3 install -r requirements.txt
 
@@ -308,6 +313,8 @@ resources:
           # Clonar o actualizar el repositorio de la UI
           if [ ! -d "$UI_LOCAL_PATH" ]; then
             sudo git clone "$UI_REPO_URL" "$UI_LOCAL_PATH"
+            sudo git checkout -b nicolas origin/nicolas # Branch nicolas
+
           else
             cd "$UI_LOCAL_PATH"
             sudo git pull origin main
