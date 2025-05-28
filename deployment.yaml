@@ -313,8 +313,6 @@ resources:
           # Clonar o actualizar el repositorio de la UI
           if [ ! -d "$UI_LOCAL_PATH" ]; then
             sudo git clone "$UI_REPO_URL" "$UI_LOCAL_PATH"
-            sudo git checkout -b nicolas origin/nicolas # Branch nicolas
-
           else
             cd "$UI_LOCAL_PATH"
             sudo git pull origin main
