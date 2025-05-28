@@ -74,7 +74,7 @@ resources:
         ports:
           - 27017
 
----
+
 
 # Router y NAT
 - name: msd-router
@@ -87,7 +87,7 @@ resources:
       natIpAllocateOption: AUTO_ONLY
       sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
 
----
+
 
 # Kong instance
 - name: msd-kong-instance
@@ -126,7 +126,7 @@ resources:
           -e "KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yaml" \
           -p 8000:8000 kong/kong-gateway
 
----
+
 
 # Database instances
 - name: relacional-db
@@ -179,7 +179,7 @@ resources:
           #!/bin/bash
           docker run -e MONGO_INITDB_ROOT_USERNAME=afgomezg1 -e MONGO_INITDB_ROOT_PASSWORD=password -p 27017:27017 -d mongo
 
----
+
 
 # Service instances
 - name: msd-medico-ms
@@ -254,7 +254,7 @@ resources:
           nohup python3 manage.py runserver 0.0.0.0:8081 > /var/log/hc-ms.log 2>&1 &
           echo "Servicio Historia Clinica Django iniciado en el puerto 8081."
 
----
+
 
 # Microservicio de Seguridad Java (Anti-Spoofing) y UI Web
 - name: msd-seguridad-ui-ms # Nuevo nombre para la VM consolidada
@@ -283,7 +283,7 @@ resources:
       - key: startup-script
         value: |
           #!/bin/bash
-          # --- CONFIGURACIÓN PARA EL MICROSERVICIO DE SEGURIDAD JAVA ---
+          #  CONFIGURACIÓN PARA EL MICROSERVICIO DE SEGURIDAD JAVA 
           sudo apt-get update -y
           sudo apt-get install -y openjdk-17-jre # Solo JRE si el JAR está pre-compilado
 
@@ -321,7 +321,7 @@ resources:
 
           echo "Servicio de seguridad Java iniciado/reiniciado en el puerto 8081."
 
-          # --- CONFIGURACIÓN PARA LA UI WEB (Nginx) ---
+          #  CONFIGURACIÓN PARA LA UI WEB (Nginx) 
           # Instalar Nginx y Git
           sudo apt-get install -y nginx git
 
