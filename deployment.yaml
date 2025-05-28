@@ -257,7 +257,7 @@ resources:
   type: compute.v1.instance
   properties:
     zone: us-central1-a
-    machineType: https://www.googleapis.com/compute/v1/projects/sprint4-460918/zones/us-central1-a/machineTypes/e2-medium # Sugiero e2-medium o superior por doble carga
+    machineType: https://www.googleapis.com/compute/v1/projects/sprint4-460918/zones/us-central1-a/machineTypes/e2-micro
     disks:
     - deviceName: boot
       type: PERSISTENT
@@ -267,10 +267,10 @@ resources:
         sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240307b
     networkInterfaces:
     - network: https://www.googleapis.com/compute/v1/projects/sprint4-460918/global/networks/default
-      networkIP: 10.128.0.86 # Mantén la misma IP interna del MS de seguridad
+      networkIP: 10.128.0.86 
       accessConfigs:
       - name: External NAT
-        type: ONE_TO_ONE_NAT # Esta VM ahora necesita una IP pública para la UI
+        type: ONE_TO_ONE_NAT 
     tags:
       items:
       - msd-services-firewall # Para que le apliquen las reglas de firewall (incluida la del puerto 80)
@@ -279,16 +279,20 @@ resources:
       - key: startup-script
         value: |
           #!/bin/bash
-          #  CONFIGURACIÓN PARA EL MICROSERVICIO DE SEGURIDAD JAVA 
-          sudo apt-get update -y
-          sudo apt-get install -y openjdk-17-jre # Solo JRE si el JAR está pre-compilado
+          echo "Iniciando startup-script..."
 
-          # Ruta donde se clona el repo del MS de Seguridad
+          # --- CONFIGURACIÓN DE DEPENDENCIAS COMUNES ---
+          sudo apt-get update -y
+          sudo apt-get install -y git
+
+          # --- CONFIGURACIÓN PARA EL MICROSERVICIO DE SEGURIDAD JAVA ---
+          sudo apt-get install -y openjdk-17-jre # Solo JRE si el JAR está pre-compilado
+          sudo apt-get install -y maven # Necesitas Maven si vas a compilar el JAR en la VM
+
           REPO_DIR_SECURITY="/home/anti_spoofing_service"
           GIT_REPO_URL_SECURITY="https://github.com/panisema2003/ANG-MS-Security.git"
-          JAR_NAME="antispoofingservice-0.0.1-SNAPSHOT.jar"
 
-          # Si el directorio no existe, clonar. Si existe, hacer un pull.
+          echo "Clonando/Actualizando repositorio del Microservicio de Seguridad..."
           if [ ! -d "$REPO_DIR_SECURITY" ]; then
             sudo git clone "$GIT_REPO_URL_SECURITY" "$REPO_DIR_SECURITY"
           else
@@ -296,37 +300,18 @@ resources:
             sudo git pull origin main # O la rama principal de tu repositorio
           fi
 
-          cd "$REPO_DIR_SECURITY"
+          # NOTA: La compilación del JAR NO se hará aquí automáticamente.
+          # Si necesitas un JAR recién compilado, deberás hacerlo manualmente por SSH
+          # después de cada 'git pull' (sudo mvn clean install).
 
-          # Si subes el JAR pre-compilado, omite la compilación.
-          # Si necesitas compilar en la VM, descomenta estas líneas y asegúrate de tener Maven/Gradle:
-          # sudo apt-get install -y maven # Instalar Maven
-          # sudo mvn clean package -DskipTests # Compilar el JAR
+          # --- CONFIGURACIÓN PARA LA UI WEB (Nginx) ---
+          sudo apt-get install -y nginx
 
-          # Detener el servicio Java si ya está corriendo
-          PID=$(ps aux | grep "${JAR_NAME}" | grep -v grep | awk '{print $2}')
-          if [ -n "$PID" ]; then
-            echo "Deteniendo el servicio Java (PID: $PID)..."
-            sudo kill -9 "$PID"
-            sleep 5
-          fi
-
-          # Ejecutar el nuevo JAR de Spring Boot en el puerto 8081
-          # Asegúrate que el JAR_NAME es accesible desde el directorio actual (ej. target/${JAR_NAME})
-          nohup java -jar "${JAR_NAME}" --server.port=8081 > /var/log/anti-spoofing-service.log 2>&1 &
-
-          echo "Servicio de seguridad Java iniciado/reiniciado en el puerto 8081."
-
-          #  CONFIGURACIÓN PARA LA UI WEB (Nginx) 
-          # Instalar Nginx y Git
-          sudo apt-get install -y nginx git
-
-          # Clonar o actualizar el repositorio de la UI
-          # Asegúrate de que tus archivos HTML/CSS/JS estén en la raíz de este repo
           UI_REPO_URL="https://github.com/panisema2003/ANG-UI.git" # ¡AJUSTA ESTA URL A TU REPOSITORIO DE LA UI!
           UI_LOCAL_PATH="/tmp/msd-ui-repo" # Directorio temporal para clonar
-          WEB_ROOT="/var/www/html" # Directorio por defecto de Nginx
+          WEB_ROOT="/var/www/html" # Directorio por defecto de Nginx para servir archivos
 
+          echo "Limpiando y clonando/actualizando repositorio de la UI..."
           # Limpiar el directorio de Nginx para evitar conflictos con archivos antiguos
           sudo rm -rf ${WEB_ROOT}/*
 
@@ -339,17 +324,10 @@ resources:
           fi
 
           # Copiar los archivos de la UI al directorio de servicio de Nginx
-          # Asegúrate de que index.html y otros archivos estén directamente en la raíz de tu repo
-          # o ajusta el path de origen si están en una subcarpeta (ej: "$UI_LOCAL_PATH/dist/*")
           sudo cp -r "${UI_LOCAL_PATH}/." "${WEB_ROOT}/"
 
           # Asegurar permisos correctos para Nginx
           sudo chown -R www-data:www-data ${WEB_ROOT}
           sudo chmod -R 755 ${WEB_ROOT}
 
-          # Iniciar/Reiniciar Nginx para que sirva los nuevos archivos
-          sudo systemctl start nginx
-          sudo systemctl enable nginx
-          sudo systemctl reload nginx # Para recargar la configuración si hubo cambios (aunque no aquí)
-
-          echo "Servidor Nginx para la UI iniciado y archivos desplegados."
+          echo "Configuración base completada. Servicios listos para ser iniciados manualmente."
