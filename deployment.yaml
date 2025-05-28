@@ -286,12 +286,12 @@ resources:
 
           # Clonar el repositorio de tu microservicio de seguridad Java
           # ¡Asegúrate de que esta URL sea la correcta para tu repositorio de Java!
-          sudo git clone https://github.com/afgomezg1/anti_spoofing_service.git /home/anti_spoofing_service
+          sudo git clone https://github.com/panisema2003/ANG-MS-Security.git /home/anti_spoofing_service
           cd /home/anti_spoofing_service
 
           # Nombre del JAR compilado (AJUSTA ESTE NOMBRE A TU JAR REAL)
           # Por ejemplo, si tu proyecto se llama 'anti-spoofing-service' y es la versión 0.0.1-SNAPSHOT
-          JAR_NAME="anti-spoofing-service-0.0.1-SNAPSHOT.jar"
+          JAR_NAME="antispoofingservice-0.0.1-SNAPSHOT.jar"
 
           # Si el JAR no está en la raíz del repo (ej. en la carpeta 'target/'),
           # podrías necesitar copiarlo o ajustar la ruta, o incluso compilarlo aquí.
