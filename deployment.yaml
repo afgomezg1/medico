@@ -211,6 +211,7 @@ resources:
           sudo apt-get update
           sudo apt install python3-pip -y
           sudo git clone https://github.com/afgomezg1/medico.git
+          sudo git checkout -b nicolas origin/nicolas # Branch nicolas
           cd medico
           sudo pip3 install -r requirements.txt
           sudo python3 manage.py makemigrations
@@ -295,6 +296,8 @@ resources:
           echo "Clonando/Actualizando repositorio del Microservicio de Seguridad..."
           if [ ! -d "$REPO_DIR_SECURITY" ]; then
             sudo git clone "$GIT_REPO_URL_SECURITY" "$REPO_DIR_SECURITY"
+            sudo git checkout -b nicolas origin/nicolas # Branch nicolas
+
           else
             cd "$REPO_DIR_SECURITY"
             sudo git pull origin main # O la rama principal de tu repositorio
