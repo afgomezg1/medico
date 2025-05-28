@@ -9,7 +9,10 @@ services:
         paths:
           - /personal-medico/internal
         strip_path: false
-
+      - name: personal-medico-internal-assignments
+        paths:
+          - /personal-medico/internal/assignments
+        strip_path: false
         # Para Core de seguridad
       - name: personal-medico-status
         paths:
@@ -25,6 +28,14 @@ services:
     host: historia_clinica_upstream
     protocol: http
     routes:
+      - name: historia_clinica
+        host: historia_clinica_upstream
+        protocol: http
+        routes:
+      - name: historia-clinica-bulk-create
+        paths:
+          - /historia-clinica/internal/diagnoses/bulk_create
+        strip_path: false
       - name: historia-clinica-report
         paths:
           - /historia-clinica/api/report

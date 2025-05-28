@@ -74,8 +74,6 @@ resources:
         ports:
           - 27017
 
-
-
 # Router y NAT
 - name: msd-router
   type: compute.v1.router
@@ -86,8 +84,6 @@ resources:
     - name: msd-nat
       natIpAllocateOption: AUTO_ONLY
       sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
-
-
 
 # Kong instance
 - name: msd-kong-instance
@@ -125,8 +121,6 @@ resources:
           -v "$(pwd):/kong/declarative/" -e "KONG_DATABASE=off" \
           -e "KONG_DECLARATIVE_CONFIG=/kong/declarative/kong.yaml" \
           -p 8000:8000 kong/kong-gateway
-
-
 
 # Database instances
 - name: relacional-db
@@ -179,8 +173,6 @@ resources:
           #!/bin/bash
           docker run -e MONGO_INITDB_ROOT_USERNAME=afgomezg1 -e MONGO_INITDB_ROOT_PASSWORD=password -p 27017:27017 -d mongo
 
-
-
 # Service instances
 - name: msd-medico-ms
   type: compute.v1.instance
@@ -211,12 +203,10 @@ resources:
           sudo apt-get update
           sudo apt install python3-pip -y
           sudo git clone https://github.com/afgomezg1/medico.git
-          sudo git checkout -b nicolas origin/nicolas # Branch nicolas
           cd medico
           sudo pip3 install -r requirements.txt
           sudo python3 manage.py makemigrations
           sudo python3 manage.py migrate
-          
 
 - name: msd-hc-ms
   type: compute.v1.instance
@@ -249,9 +239,6 @@ resources:
           sudo git clone https://github.com/afgomezg1/historia_clinica.git
           cd historia_clinica
           sudo pip3 install -r requirements.txt
-         
-
-
 
 # Microservicio de Seguridad Java (Anti-Spoofing) y UI Web
 - name: msd-seguridad-ui-ms # Nuevo nombre para la VM consolidada
