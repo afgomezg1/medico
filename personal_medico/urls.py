@@ -1,6 +1,10 @@
 from django.urls import path
-from .views import internal_assignments
+
+from ANG_DiagnosticAPP.diagnosticapp import views
+
+from.views import health_check
 
 urlpatterns = [
-    path("internal/assignments/", internal_assignments, name="internal_assignments")
+    path('internal/assignments/',  views.assignment_list, name='assignment_list'),
+    path('health/', health_check, name='health_check'),
 ]
