@@ -72,7 +72,7 @@ class Command(BaseCommand):
         ))
 
         # 4) Bulk insert into Mongo via Kong
-        url = settings.PATH_API_GATEWAY + "/historia_clinica/internal/diagnoses/bulk_create/"
+        url = settings.PATH_API_GATEWAY + "/historia-clinica/internal/diagnoses/bulk_create/"
         headers = {'Content-Type': 'application/json'}
         resp = requests.post(url, data=json.dumps(diag_payload), headers=headers, timeout=180)
         resp.raise_for_status()
