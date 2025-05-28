@@ -18,7 +18,7 @@ services:
         paths:
           - /historia-clinica/api/report
         strip_path: false
-        
+
    # NUEVO: Microservicio de Seguridad Java
   - name: seguridad_ms # Un nombre de servicio para el microservicio de seguridad
     host: seguridad_upstream # Apunta al upstream que definiremos abajo
@@ -28,6 +28,26 @@ services:
         paths:
           - /seguridad # Este será el path que tu UI llamará a través de Kong (ej: http://34.27.77.137:8000/seguridad/monitor/start)
         strip_path: true # Quita '/seguridad' antes de reenviar al microservicio Java
+    plugins: # <--- ¡AÑADE ESTA SECCIÓN PARA EL PLUGIN CORS!
+      - name: cors
+        config:
+          # ¡IMPORTANTE! Aquí se especifica la IP externa de tu UI
+          origins:
+            - http://34.9.134.78 # <-- ¡Esta es la IP de tu msd-seguridad-ui-ms!
+          methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+          headers:
+            - Accept
+            - Accept-Language
+            - Content-Language
+            - Content-Type
+          exposed_headers: []
+          credentials: true
+          max_age: 3600
+          preflight_continue: true
 
 upstreams:
   - name: medico_upstream
