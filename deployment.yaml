@@ -215,9 +215,7 @@ resources:
           sudo pip3 install -r requirements.txt
           sudo python3 manage.py makemigrations
           sudo python3 manage.py migrate
-          # Ejecutar Django en el puerto 8080. Usamos 0.0.0.0 para que sea accesible externamente.
-          nohup python3 manage.py runserver 0.0.0.0:8080 > /var/log/medico-ms.log 2>&1 &
-          echo "Servicio Medico Django iniciado en el puerto 8080."
+          
 
 - name: msd-hc-ms
   type: compute.v1.instance
@@ -250,9 +248,7 @@ resources:
           sudo git clone https://github.com/afgomezg1/historia_clinica.git
           cd historia_clinica
           sudo pip3 install -r requirements.txt
-          # Ejecutar Django en el puerto 8081. Esto es importante para que el servicio Java pueda distinguirlo.
-          nohup python3 manage.py runserver 0.0.0.0:8081 > /var/log/hc-ms.log 2>&1 &
-          echo "Servicio Historia Clinica Django iniciado en el puerto 8081."
+         
 
 
 
