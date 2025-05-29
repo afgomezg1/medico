@@ -7,50 +7,43 @@ from personal_medico.models import Doctor, Assignment
 from django.conf import settings
 import random, requests, json
 
-# Parámetros ajustados para más realismo
-NUM_CITIES           = 20
-NUM_DOCTORS          = 200
-ASSIGNMENTS_MIN      = 50
-ASSIGNMENTS_MAX      = 300
-MONTHS_SPAN          = 12
-DIAGNOSED_PROBABILITY = 0.7  # 70% de las asignaciones se marcan como "diagnosed"
+NUM_CITIES            = 20
+NUM_DOCTORS           = 200
+ASSIGNMENTS_MIN       = 50
+ASSIGNMENTS_MAX       = 300
+MONTHS_SPAN           = 12
+DIAGNOSED_PROBABILITY = 0.7
+BATCH_SIZE            = 1000  # <=  API’s comfortable limit
 
 class Command(BaseCommand):
-    help = 'Populate Postgres and Mongo with semi-realistic volumes'
+    help = 'Populate Postgres and Mongo with semi-realistic volumes, in batches'
 
     def handle(self, *args, **options):
         fake = Faker()
         now = timezone.now()
 
-        # 1) Generar un pool de ciudades únicas
+        # 1) Generate unique cities
         Faker.seed(0)
         fake.unique.clear()
         cities = []
         while len(cities) < NUM_CITIES:
             cities.append(fake.unique.city())
-        self.stdout.write(self.style.NOTICE(
-            f'Using {NUM_CITIES} unique cities for doctor assignments.'
-        ))
+        self.stdout.write(self.style.NOTICE(f'Using {NUM_CITIES} unique cities.'))
 
-        # 2) Crear doctores y repartirlos entre esas ciudades
-        doctors = []
-        for _ in range(NUM_DOCTORS):
-            name = fake.name()
-            city = random.choice(cities)
-            doctors.append(Doctor(name=name, city=city))
+        # 2) Create doctors
+        doctors = [
+            Doctor(name=fake.name(), city=random.choice(cities))
+            for _ in range(NUM_DOCTORS)
+        ]
         Doctor.objects.bulk_create(doctors)
         doctors = list(Doctor.objects.all())
-        self.stdout.write(self.style.SUCCESS(
-            f'Postgres: created {NUM_DOCTORS} doctors.'
-        ))
+        self.stdout.write(self.style.SUCCESS(f'Created {NUM_DOCTORS} doctors.'))
 
-        # 3) Crear assignments y payload de diagnósticos
+        # 3) Build assignments + diagnosis payload
         assignments = []
         diag_payload = []
         for doc in doctors:
-            num_asgs = random.randint(ASSIGNMENTS_MIN, ASSIGNMENTS_MAX)
-            for _ in range(num_asgs):
-                # a) Fecha aleatoria en últimos MONTHS_SPAN meses
+            for _ in range(random.randint(ASSIGNMENTS_MIN, ASSIGNMENTS_MAX)):
                 days_back = random.randint(0, MONTHS_SPAN * 30)
                 assigned_at = now - timezone.timedelta(
                     days=days_back,
@@ -59,50 +52,59 @@ class Command(BaseCommand):
                     seconds=random.randint(0,59)
                 )
                 pid = fake.uuid4()
-
-                # b) Crear assignment en Postgres
                 assignments.append(Assignment(
-                    doctor=doc,
-                    patient_id=pid,
-                    assigned_at=assigned_at
+                    doctor=doc, patient_id=pid, assigned_at=assigned_at
                 ))
 
-                # c) Generar estado de diagnóstico con probabilidad
+                # Decide status
                 if random.random() < DIAGNOSED_PROBABILITY:
                     status = "diagnosed"
                     diff = now - assigned_at
-                    rnd_sec = random.randint(0, int(diff.total_seconds()))
-                    diagnosed_at = assigned_at + timezone.timedelta(seconds=rnd_sec)
+                    sec = random.randint(0, int(diff.total_seconds()))
+                    diagnosed_at = assigned_at + timezone.timedelta(seconds=sec)
                     refractory = random.choice([True, False])
                 else:
                     status = "pending"
                     diagnosed_at = None
                     refractory = None
 
-                d = {"patient_id": pid, "status": status}
+                entry = {"patient_id": pid, "status": status}
                 if diagnosed_at:
-                    d["diagnosed_at"] = diagnosed_at.isoformat()
+                    entry["diagnosed_at"] = diagnosed_at.isoformat()
                 if refractory is not None:
-                    d["refractory_epilepsy"] = refractory
+                    entry["refractory_epilepsy"] = refractory
 
-                diag_payload.append(d)
+                diag_payload.append(entry)
 
-        # 4) Bulk insert en Postgres
+        # 4) Bulk insert assignments in Postgres
         Assignment.objects.bulk_create(assignments)
         total_asgs = len(assignments)
         self.stdout.write(self.style.SUCCESS(
-            f'Postgres: created {total_asgs} assignments (avg {total_asgs/NUM_DOCTORS:.1f} per doctor).'
+            f'Postgres: created {total_asgs} assignments.'
         ))
 
-        # 5) Bulk insert en Mongo vía Kong
+        # 5) Chunked POST to Mongo via Kong
         url = settings.PATH_API_GATEWAY + "/historia-clinica/internal/diagnoses/bulk_create/"
         headers = {'Content-Type': 'application/json'}
-        resp = requests.post(url,
-                             data=json.dumps(diag_payload),
-                             headers=headers,
-                             timeout=300)
-        resp.raise_for_status()
-        inserted = resp.json().get("inserted", 0)
+        inserted_total = 0
+
+        for i in range(0, len(diag_payload), BATCH_SIZE):
+            batch = diag_payload[i:i+BATCH_SIZE]
+            resp = requests.post(url,
+                                 data=json.dumps(batch),
+                                 headers=headers,
+                                 timeout=300)
+            try:
+                resp.raise_for_status()
+            except requests.HTTPError as e:
+                self.stderr.write(f'Batch {i//BATCH_SIZE +1} failed: {resp.status_code} {resp.text}')
+                raise
+            inserted = resp.json().get("inserted", 0)
+            inserted_total += inserted
+            self.stdout.write(self.style.SUCCESS(
+                f'Batch {i//BATCH_SIZE +1}: inserted {inserted} diagnoses.'
+            ))
+
         self.stdout.write(self.style.SUCCESS(
-            f'Mongo: inserted {inserted} diagnoses.'
+            f'Total Mongo inserts: {inserted_total} diagnoses.'
         ))
