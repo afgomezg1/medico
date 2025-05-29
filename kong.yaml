@@ -28,10 +28,6 @@ services:
     host: historia_clinica_upstream
     protocol: http
     routes:
-      - name: historia_clinica
-        host: historia_clinica_upstream
-        protocol: http
-        routes:
       - name: historia-clinica-bulk-create
         paths:
           - /historia-clinica/internal/diagnoses/bulk_create
@@ -40,7 +36,6 @@ services:
         paths:
           - /historia-clinica/api/report
         strip_path: false
-
       # PAra Core de seguridad
       - name: historia-clinica-status
         paths:
@@ -65,7 +60,7 @@ services:
         config:
           # ¡IMPORTANTE! Aquí se especifica la IP externa de tu UI
           origins:
-            - http://34.9.134.78 # <-- ¡Esta es la IP de tu msd-seguridad-ui-ms!
+            - http://35.188.176.124 # TODO: cambiar cuando toque<-- ¡Esta es la IP de tu msd-seguridad-ui-ms!
           methods:
             - GET
             - POST
