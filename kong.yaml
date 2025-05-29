@@ -18,10 +18,26 @@ services:
     host: historia_clinica_upstream
     protocol: http
     routes:
+      - name: historia-clinica-home
+        paths:
+          - /
+        strip_path: false
+
+      - name: historia-clinica-ui
+        paths:
+          - /historia-clinica/
+        strip_path: false
+
+      - name: historia-clinica-static
+        paths:
+          - /static/
+        strip_path: false
+
       - name: historia-clinica-bulk-create
         paths:
           - /historia-clinica/internal/diagnoses/bulk_create
         strip_path: false
+
       - name: historia-clinica-report
         paths:
           - /historia-clinica/api/report
