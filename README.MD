@@ -1,7 +1,7 @@
 cd /medico
 nohup python3 manage.py runserver 0.0.0.0:8080 \
   > ~/medico_run.log 2>&1 &
-  
+
 cd /historia_clinica
 nohup python3 manage.py runserver 0.0.0.0:8080 \
   > ~/hc_run.log 2>&1 &
